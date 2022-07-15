@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <input type="text" />
+    <select></select>
+    <div class="page-screen"></div>
+
+    <script>
+        
+        class Countries{
+            constructor(){
+                this.countryList = [];
+
+                this.start()
+            }
+
+            async start(){
+                const allCountries = await this.getCountries();
+                console.log(allCountries)
+                for (const country of allCountries) {
+                    let countryInfo = {}
+                    countryInfo.code = country.cca3
+                    countryInfo.names = [country.name.official, country.name.common, country.translations.pol.common, country.translations.pol.official];
+                    
+                    this.countryList.push(countryInfo)
+                }
+            }
+
+            async getCountries(){
+                const response = await fetch('https://restcountries.com/v3.1/all');
+                const data = await response.json();
+                return data;
+            }
+
+            getCountry(code){
+                for (const country of this.countryList) {
+                    if(country.code == code){
+                        return country;
+                    }
+                }
+            }
+
+            searchCountry(name){
+                console.log(name)
+                const result = new Set()
+                for (const country of this.countryList) {
+                    let counter = 0
+                    for (const word of name.split(' ')) {                       
+                        for (const name of country.names) {
+                            if(name.toLowerCase().includes(word.toLowerCase())){
+                                counter++
+                                break
+                            }
+                        }
+                    }
+                    if(counter == name.split(' ').length){
+                        result.add(country)
+                    }
+                }
+                return result;
+            }
+
+            async getCountryByCode(code){
+                const country = await fetch(`https://restcountries.com/v3.1/alpha/${code}`)
+                const data = await country.json();
+                return data;
+            }
+        }
+
+        class Country{
+            constructor(country){
+                this.country = country;
+                this.commonName = this.country.name.common;
+                this.officialName = this.country.name.official;
+                this.code = this.country.cca2;
+                this.independent = this.country.independent;
+                this.flag = this.country.countryFlag;
+                this.countryCurrency = this.country.countryCurrency;
+                this.countryLanguage = this.country.countryLanguage;
+                this.countryCapital = this.country.countryCapital;
+                this.countryCallingCode = this.country.countryCallingCode;
+                this.countryRegion = this.country.segion;
+                this.countrySubRegion = this.country.subRegion;
+            }
+            displayCountry(){
+                console.log(this)
+                const node = document.getElementById('page-screen')
+                node.innerHTML = `
+                    <div class="country-info">
+                        <div class="country-info-flag">
+                            <img src="${this.countryFlag}" alt="">
+                        </div>
+                        <div class="country-info-name">
+                            <h1>${this.countryName}</h1>
+                        </div>
+                        <div class="country-info-details">
+                            <div class="country-info-details-item">
+                                <h2>Capital</h2>
+                                <p>${this.countryCapital}</p>
+                            </div>
+                            <div class="country-info-details-item">
+                                <h2>Calling Code</h2>
+                                <p>${this.countryCallingCode}</p>
+                            </div>
+                            <div class="country-info-details-item">
+                                <h2>Region</h2>
+                                <p>${this.countryRegion}</p>
+                            </div>
+                            <div class="country-info-details-item">
+                                <h2>Sub Region</h2>
+                                <p>${this.countrySubRegion}</p>
+                            </div>
+                            <div class="country-info-details-item">
+                                <h2>Currency</h2>
+                                <p>${this.countryCurrency}</p>
+                            </div>
+                            <div class="country-info-details-item">
+                                <h2>Language</h2>
+                                <p>${this.countryLanguage}</p>
+                            </div>
+                        </div>
+                    </div>
+                `
+
+            }
+        }
+        const countries = new Countries();
+
+        const input = document.querySelector('input')
+        input.addEventListener('keyup', (e) => {
+            const result = countries.searchCountry(e.target.value)
+            document.querySelector('select').innerHTML = ""
+
+            for (const country of result) {
+                const option = document.createElement('option')
+                option.value = country.code
+                option.innerText = country.names[0]
+                document.querySelector('select').appendChild(option)
+            }
+            
+            if(result.size==1){
+                console.log(result)
+                console.log("11")
+                const country = countries.getCountryByCode(result.values().next().value.code)
+                const countryInfo = new Country(country)
+                countryInfo.displayCountry()
+            }
+                
+        })
+        document.querySelector('select').addEventListener('change' || 'click', (e) => {
+            console.log(e.target.value)
+            console.log(e)
+            const country = countries.getCountryByCode(e.target.value)
+            console.log(country)
+        })
+</script>
+</body>
+</html>
